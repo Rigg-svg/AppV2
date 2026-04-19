@@ -32,4 +32,9 @@ class Medico extends Authenticatable
             'activo' => 'boolean',
         ];
     }
+
+    public function citas()
+    {
+        return $this->hasMany(Cita::class);
+    }
 }

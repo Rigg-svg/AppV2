@@ -32,4 +32,9 @@ class Paciente extends Authenticatable
             'fecha_nacimiento' => 'date',
         ];
     }
+
+    public function citas()
+    {
+        return $this->hasMany(Cita::class);
+    }
 }
