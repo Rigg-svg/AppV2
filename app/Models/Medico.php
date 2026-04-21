@@ -33,6 +33,7 @@ class Medico extends Authenticatable
         ];
     }
 
+    // Un médico tiene muchas citas
     public function citas()
     {
         return $this->hasMany(Cita::class);

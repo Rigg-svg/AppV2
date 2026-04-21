@@ -4,27 +4,24 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CitaController;
 
-// Redirige la raíz al login
 Route::get('/', function () {
     return redirect()->route('login.form');
 });
 
-// Rutas públicas (solo si NO está autenticado)
 Route::middleware('guest:paciente,medico')->group(function () {
 
     Route::get('/login', [AuthController::class , 'showLogin'])->name('login.form');
     Route::post('/login', [AuthController::class , 'login'])->name('login');
 });
 
-// Rutas protegidas (debe estar autenticado como paciente O médico)
 Route::middleware('auth:paciente,medico')->group(function () {
 
     Route::get('/dashboard', [AuthController::class , 'dashboard'])->name('dashboard');
     Route::post('/logout', [AuthController::class , 'logout'])->name('logout');
 
-    // Rutas de citas
     Route::resource('citas', CitaController::class)->except(['destroy']);
     Route::patch('/citas/{cita}/cancelar', [CitaController::class , 'cancelar'])->name('citas.cancelar');
+    Route::patch('/citas/{cita}/completar', [CitaController::class , 'completar'])->name('citas.completar');
 });
 
 // resources/
@@ -41,7 +38,7 @@ Route::middleware('auth:paciente,medico')->group(function () {
 // Route::get('/citas/{cita}',         [CitaController::class, 'show']);
 // Route::get('/citas/{cita}/edit',    [CitaController::class, 'edit']);
 // Route::put('/citas/{cita}',         [CitaController::class, 'update']);
-// Route::delete('/citas/{cita}',      [CitaController::class, 'destroy']);
+
 
 // <!-- Enlace a la lista -->
 // <a href="{{ route('citas.index') }}">Ver citas</a>

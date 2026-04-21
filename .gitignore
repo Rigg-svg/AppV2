@@ -24,6 +24,3 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /node_modules
-resources/views/auth/login.blade.php
-resources/views/dashboard.blade.php
-

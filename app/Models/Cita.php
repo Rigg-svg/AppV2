@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Cita extends Model
 {
+    // id paciente_id medico_id fecha hora estado motivo notas duracion_minutos created_at updated_at deleted_at
     use SoftDeletes;
 
     protected $fillable = [

@@ -20,7 +20,6 @@ class CitaController extends Controller
         return ['usuario' => Auth::guard('medico')->user(), 'tipo' => 'medico'];
     }
 
-    // Listar citas según el tipo de usuario
     public function index()
     {
         ['usuario' => $usuario, 'tipo' => $tipo] = $this->usuarioActual();
@@ -73,23 +72,23 @@ class CitaController extends Controller
         return redirect()->route('citas.index')->with('success', 'Cita creada correctamente.');
     }
 
-    // Ver detalle de una cita
-    // public function show(Cita $cita)
-    // {
-    //     ['usuario' => $usuario, 'tipo' => $tipo] = $this->usuarioActual();
+    //Ver detalle de una cita
+    public function show(Cita $cita)
+    {
+        ['usuario' => $usuario, 'tipo' => $tipo] = $this->usuarioActual();
 
-    //     // Verifica que la cita pertenezca al usuario autenticado
-    //     if ($tipo === 'paciente' && $cita->paciente_id !== $usuario->id) {
-    //         abort(403);
-    //     }
-    //     if ($tipo === 'medico' && $cita->medico_id !== $usuario->id) {
-    //         abort(403);
-    //     }
+        // Verifica que la cita pertenezca al usuario autenticado
+        if ($tipo === 'paciente' && $cita->paciente_id !== $usuario->id) {
+            abort(403);
+        }
+        if ($tipo === 'medico' && $cita->medico_id !== $usuario->id) {
+            abort(403);
+        }
 
-    //     $cita->load('paciente', 'medico');
+        $cita->load('paciente', 'medico');
 
-    //     return view('citas.show', compact('cita', 'tipo'));
-    // }
+        return view('citas.show', compact('cita', 'tipo'));
+    }
 
     // Formulario para editar cita
     public function edit(Cita $cita)
@@ -140,6 +139,29 @@ class CitaController extends Controller
         ]);
 
         return redirect()->route('citas.index')->with('success', 'Cita actualizada correctamente.');
+    }
+
+    public function completar(Cita $cita)
+    {
+        ['usuario' => $usuario, 'tipo' => $tipo] = $this->usuarioActual();
+
+        if ($tipo !== 'medico') {
+            abort(403);
+        }
+
+        if ($cita->medico_id !== $usuario->id) {
+            abort(403);
+        }
+
+        if ($cita->estado !== 'programada') {
+            return redirect()->route('citas.index')
+                ->with('error', 'Solo se pueden completar citas programadas.');
+        }
+
+        $cita->update(['estado' => 'completada']);
+
+        return redirect()->route('citas.index')
+            ->with('success', 'Cita marcada como completada.');
     }
 
     // Cancelar cita (no se elimina, cambia el estado)
