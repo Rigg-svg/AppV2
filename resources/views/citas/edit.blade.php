@@ -3,6 +3,7 @@
 
 <head>
     <meta charset='UTF-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Cita</title>
     <style>
         body {
@@ -15,7 +16,7 @@
             background: white;
             padding: 30px;
             border-radius: 10px;
-            max-width: 600px;
+            max-width: 700px;
             margin: auto;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
@@ -117,6 +118,94 @@
             font-size: 15px;
             color: #1e293b;
         }
+
+        /* ====== Slot Grid Styles ====== */
+        .slots-section {
+            margin-bottom: 18px;
+        }
+
+        .slots-section label {
+            margin-bottom: 10px;
+        }
+
+        .slots-prompt {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 14px;
+            padding: 25px 15px;
+            border: 2px dashed #e2e8f0;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+
+        .slots-loading {
+            text-align: center;
+            color: #64748b;
+            font-size: 14px;
+            padding: 25px;
+        }
+
+        .slots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 10px;
+        }
+
+        .slot-btn {
+            padding: 12px 8px;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.2s ease;
+            color: #1e293b;
+        }
+
+        .slot-btn:hover:not(.slot-disabled):not(.slot-selected) {
+            border-color: #4f46e5;
+            background: #eef2ff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.15);
+        }
+
+        .slot-btn.slot-selected {
+            border-color: #4f46e5;
+            background: #4f46e5;
+            color: white;
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+        }
+
+        .slot-btn.slot-disabled {
+            background: #fee2e2;
+            border-color: #fecaca;
+            color: #b91c1c;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .slot-btn .slot-label {
+            display: block;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .slot-btn .slot-status {
+            display: block;
+            font-size: 11px;
+            font-weight: 400;
+            margin-top: 3px;
+        }
+
+        .slot-btn:not(.slot-disabled) .slot-status {
+            color: #16a34a;
+        }
+
+        .slot-btn.slot-selected .slot-status {
+            color: #c7d2fe;
+        }
     </style>
 </head>
 
@@ -147,13 +236,14 @@
             <div class="fila">
                 <div class="form-group">
                     <label>Fecha</label>
-                    <input type="date" name="fecha" value="{{ old('fecha', $cita->fecha->format('Y-m-d')) }}"
+                    <input type="date" name="fecha" id="fecha" value="{{ old('fecha', $cita->fecha->format('Y-m-d')) }}"
                         min="{{ date('Y-m-d') }}" required>
                     @error('fecha')
                     <p class="error">{{ $message }}</p>
                     @enderror
                 </div>
 
+                @if($tipo === 'medico')
                 <div class="form-group">
                     <label>Hora</label>
                     <input type="time" name="hora"
@@ -162,7 +252,24 @@
                     <p class="error">{{ $message }}</p>
                     @enderror
                 </div>
+                @endif
             </div>
+
+            @if($tipo === 'paciente')
+            {{-- Selector visual de horarios para pacientes --}}
+            <div class="slots-section">
+                <label>Horario disponible <span style="font-weight:400; color:#64748b;">(08:00 - 16:30)</span></label>
+                @error('hora')
+                <p class="error">{{ $message }}</p>
+                @enderror
+
+                <div id="slots-container">
+                    <div class="slots-loading">Cargando horarios...</div>
+                </div>
+
+                <input type="hidden" name="hora" id="hora_hidden" value="{{ old('hora', \Carbon\Carbon::parse($cita->hora)->format('H:i')) }}">
+            </div>
+            @endif
 
             <div class="form-group">
                 <label>Duración (minutos)</label>
@@ -203,6 +310,88 @@
 
         </form>
     </div>
+
+    @if($tipo === 'paciente')
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const medicoId = {{ $cita->medico_id }};
+            const citaId = {{ $cita->id }};
+            const fechaInput = document.getElementById('fecha');
+            const slotsContainer = document.getElementById('slots-container');
+            const horaHidden = document.getElementById('hora_hidden');
+
+            function fetchSlots() {
+                const fecha = fechaInput.value;
+                if (!fecha) {
+                    slotsContainer.innerHTML = '<div class="slots-prompt">Selecciona una <strong>fecha</strong> para ver los horarios.</div>';
+                    return;
+                }
+
+                slotsContainer.innerHTML = '<div class="slots-loading">Cargando horarios...</div>';
+
+                fetch(`{{ route('citas.slots') }}?medico_id=${medicoId}&fecha=${fecha}`)
+                    .then(r => {
+                        if (!r.ok) throw new Error('Error');
+                        return r.json();
+                    })
+                    .then(data => renderSlots(data.slots))
+                    .catch(() => {
+                        slotsContainer.innerHTML = '<div class="slots-prompt">Error al cargar horarios.</div>';
+                    });
+            }
+
+            function renderSlots(slots) {
+                if (!slots || slots.length === 0) {
+                    slotsContainer.innerHTML = '<div class="slots-prompt">No hay horarios para este día.</div>';
+                    return;
+                }
+
+                const currentValue = horaHidden.value;
+                let html = '<div class="slots-grid">';
+
+                slots.forEach(slot => {
+                    // The current appointment's own slot should appear as selectable, not occupied
+                    const isCurrentSlot = (currentValue === slot.hora);
+                    const isOccupied = slot.ocupado && !isCurrentSlot;
+                    const isSelected = isCurrentSlot;
+
+                    if (isOccupied) {
+                        html += `
+                            <div class="slot-btn slot-disabled" title="Horario ocupado">
+                                <span class="slot-label">${slot.hora}</span>
+                                <span class="slot-status">Ocupado</span>
+                            </div>`;
+                    } else {
+                        html += `
+                            <div class="slot-btn ${isSelected ? 'slot-selected' : ''}" data-hora="${slot.hora}">
+                                <span class="slot-label">${slot.hora}</span>
+                                <span class="slot-status">Disponible</span>
+                            </div>`;
+                    }
+                });
+
+                html += '</div>';
+                slotsContainer.innerHTML = html;
+
+                slotsContainer.querySelectorAll('.slot-btn:not(.slot-disabled)').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        slotsContainer.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('slot-selected'));
+                        btn.classList.add('slot-selected');
+                        horaHidden.value = btn.getAttribute('data-hora');
+                    });
+                });
+            }
+
+            fechaInput.addEventListener('change', () => {
+                horaHidden.value = '';
+                fetchSlots();
+            });
+
+            // Auto-load slots on page load since the doctor and date are known
+            fetchSlots();
+        });
+    </script>
+    @endif
 </body>
 
 </html>

@@ -70,3 +70,6 @@ App\Models\Paciente::create([
     'sexo'             => 'masculino',
     'direccion'        => 'Calle 10 # 5-20'
 ]);
+
+
+Documentación: https://mintlify.wiki/Rigg-svg/AppV2/introduction

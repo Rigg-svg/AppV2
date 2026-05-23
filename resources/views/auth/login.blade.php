@@ -39,7 +39,6 @@
             border-radius: 5px;
         }
 
-        /* Selector de tipo */
         .tipo-selector {
             display: flex;
             gap: 10px;
@@ -113,7 +112,6 @@
         <form action="{{ route('login') }}" method="POST">
             @csrf
 
-            {{-- Selector de tipo de usuario --}}
             <label>Tipo de usuario</label>
             <div class="tipo-selector" style="margin-top: 8px;">
                 <input type="radio" name="tipo" id="tipo_paciente" value="paciente" {{ old('tipo', 'paciente'
@@ -128,14 +126,12 @@
             <p class='error'>{{ $message }}</p>
             @enderror
 
-            {{-- Email --}}
             <label>Correo electrónico</label>
             <input type='email' name='email' value="{{ old('email') }}" required>
             @error('email')
             <p class='error'>{{ $message }}</p>
             @enderror
 
-            {{-- Contraseña --}}
             <label>Contraseña</label>
             <input type='password' name='password' required>
             @error('password')

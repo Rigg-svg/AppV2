@@ -17,7 +17,7 @@ class AuthController extends Controller
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
-            'tipo' => ['required', 'in:paciente,medico'], // campo oculto en el form
+            'tipo' => ['required', 'in:paciente,medico'],
         ]);
 
         $guard = $credentials['tipo']; // 'paciente' o 'medico'
@@ -40,7 +40,7 @@ class AuthController extends Controller
 
     public function dashboard()
     {
-        // Detecta qué guard está autenticado
+        // Detecta que guard esta autenticado (usuario)
         $usuario = Auth::guard('paciente')->user() ?? Auth::guard('medico')->user();
 
         return view('dashboard', compact('usuario'));

@@ -12,6 +12,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
 
+        $middleware->append(\App\Http\Middleware\PreventBackHistory::class);
+
         //No autenticado
         $middleware->redirectGuestsTo(fn () => route('login.form'));
 

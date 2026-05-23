@@ -89,16 +89,18 @@
 <body>
     <div class="container">
 
-        {{-- Encabezado con nombre y badge de tipo --}}
         <div class="header">
             <h2 style="margin:0">Bienvenido, {{ $usuario->nombre }}</h2>
-
-            <a class="bagde" href="{{ route('citas.index') }}"> Ver citas </a>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                @if(Auth::guard('medico')->check())
+                    <a href="{{ route('calendario.index') }}" style="padding: 10px 20px; background: #4f46e5; color: white; border-radius: 5px; text-decoration: none; font-size: 14px; font-weight: bold; display: inline-block;">Ver Calendario</a>
+                @endif
+                <a class="bagde" href="{{ route('citas.index') }}" style="padding: 10px 20px; background: #030bedff; color: white; border-radius: 5px; text-decoration: none; font-size: 14px; font-weight: bold; display: inline-block;"> Ver citas </a>
+            </div>
         </div>
 
         <hr>
 
-        {{-- Info según el tipo de usuario --}}
         @if(Auth::guard('paciente')->check())
         <div class="info-grid">
             <div class="info-card">
@@ -140,7 +142,6 @@
         </div>
         @endif
 
-        {{-- Cerrar sesión --}}
         <form action="{{ route('logout') }}" method="POST">
             @csrf
             <button type="submit" class="btn-logout">Cerrar sesión</button>

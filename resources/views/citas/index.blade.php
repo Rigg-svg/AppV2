@@ -53,7 +53,7 @@
         }
 
         .btn-warning {
-            background: #d97706;
+            background: #2563eb;
             color: white;
         }
 
@@ -108,7 +108,7 @@
 
         .badge-completada {
             background: #dcfce7;
-            color: #15803d;
+            color: #1d4ed8;
         }
 
         .acciones {
@@ -143,6 +143,9 @@
         <div class="header">
             <h2>Mis Citas</h2>
             <div style="display:flex; gap:10px;">
+                @if($tipo === 'medico')
+                    <a href="{{ route('calendario.index') }}" class="btn" style="background: #4f46e5; color: white;">Ver Calendario</a>
+                @endif
                 <a href="{{ route('citas.create') }}" class="btn btn-primary">Nueva cita</a>
 
                 <form action="{{ route('logout') }}" method="POST">

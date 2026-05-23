@@ -123,7 +123,7 @@
         }
 
         .btn-warning {
-            background: #d97706;
+            background: #2563eb;
             color: white;
         }
 
