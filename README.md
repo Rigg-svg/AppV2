@@ -48,28 +48,23 @@ Médico ve su historial de citas
 
 # Datos de prueba
 
-Paciente: [laura@email.com] - 123456
-Médico: [carlos@email.com] - 123456
+Usar terminal: **php artisan tinker**, y luego escribir los comandos de prueba
 
+```php
+App\Models\Paciente::create(['nombre' => 'Carlos Andres Lopez','telefono' => '3001234567','email' => 'carlos.lopez@email.com','password' => '123456','fecha_nacimiento' => '1988-03-10','sexo' => 'masculino','direccion' => 'Calle 15 # 8-32, Pereira']);
+```
 
-App\Models\Medico::create([
-    'nombre'           => 'Dra. Laura Gómez',
-    'email'            => 'laura@email.com',
-    'password'         => bcrypt('123456'),
-    'especialidad'     => 'Medicina General',
-    'telefono'         => '3109876543',
-    'numero_licencia'  => 'MED-00123'
-]);
+```php
+App\Models\Paciente::create(['nombre' => 'Maria Fernanda Torres','telefono' => '3157654321','email' => 'maria.torres@email.com','password' => '123456','fecha_nacimiento' => '1993-11-25','sexo' => 'femenino','direccion' => 'Carrera 12 # 45-67, Pereira']);
+```
 
-App\Models\Paciente::create([
-    'nombre'           => 'Carlos Pérez',
-    'email'            => 'carlos@email.com',
-    'password'         => bcrypt('123456'),
-    'telefono'         => '3001234567',
-    'fecha_nacimiento' => '1990-01-01',
-    'sexo'             => 'masculino',
-    'direccion'        => 'Calle 10 # 5-20'
-]);
+```php
+App\Models\Medico::create(['nombre' => 'Jorge Herrera','especialidad' => 'Cardiología','telefono' => '3209876543','email' => 'jorge.herrera@clinica.com','password' => '123456','numero_licencia' => 'MED-2024-003','activo' => true]);
+```
 
+```php
+App\Models\Medico::create(['nombre' => 'Valentina Ruiz','especialidad' => 'Dermatología','telefono' => '3124567890','email' => 'valentina.ruiz@clinica.com','password' => '123456','numero_licencia' => 'MED-2024-004','activo' => true]);
+
+```
 
 Documentación: https://mintlify.wiki/Rigg-svg/AppV2/introduction

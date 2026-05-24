@@ -245,10 +245,19 @@
                 {{-- Médicos conservan el input libre de hora --}}
                 <div class="form-group">
                     <label>Hora</label>
-                    <input type="time" name="hora" value="{{ old('hora') }}" required>
-                    @error('hora')
-                    <p class="error">{{ $message }}</p>
-                    @enderror
+                    <select name="hora" required>
+                        <option value="" disabled {{ old('hora') ? '' : 'selected' }}>Selecciona una hora</option>
+                        @php
+                        $inicio = strtotime('08:00');
+                        $fin = strtotime('16:30');
+                        @endphp
+                        @while($inicio <= $fin)
+                        <option value="{{ date('H:i', $inicio) }}" {{ old('hora') == date('H:i', $inicio) ? 'selected' : '' }}>
+                            {{ date('H:i', $inicio) }}
+                        </option>
+                        @php $inicio = strtotime('+30 minutes', $inicio) @endphp
+                        @endwhile
+        </select>
                 </div>
                 @endif
             </div>
