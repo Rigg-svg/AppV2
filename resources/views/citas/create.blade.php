@@ -218,7 +218,7 @@
             @else
             <div class="form-group">
                 <label>Paciente</label>
-                <select name="paciente_id" required>
+                <select name="paciente_id" id="paciente_id" required>
                     <option value="">-- Selecciona un paciente --</option>
                     @foreach($pacientes as $paciente)
                     <option value="{{ $paciente->id }}" {{ old('paciente_id')==$paciente->id ? 'selected' : '' }}>
@@ -242,23 +242,8 @@
                 </div>
 
                 @if($tipo === 'medico')
-                {{-- Médicos conservan el input libre de hora --}}
-                <div class="form-group">
-                    <label>Hora</label>
-                    <select name="hora" required>
-                        <option value="" disabled {{ old('hora') ? '' : 'selected' }}>Selecciona una hora</option>
-                        @php
-                        $inicio = strtotime('08:00');
-                        $fin = strtotime('16:30');
-                        @endphp
-                        @while($inicio <= $fin)
-                        <option value="{{ date('H:i', $inicio) }}" {{ old('hora') == date('H:i', $inicio) ? 'selected' : '' }}>
-                            {{ date('H:i', $inicio) }}
-                        </option>
-                        @php $inicio = strtotime('+30 minutes', $inicio) @endphp
-                        @endwhile
-        </select>
-                </div>
+                {{-- Columna vacía para mantener el grid de 2 columnas alineado --}}
+                <div></div>
                 @endif
             </div>
 
@@ -279,11 +264,26 @@
                 {{-- Campo oculto que envía el valor real del slot seleccionado --}}
                 <input type="hidden" name="hora" id="hora_hidden" value="{{ old('hora') }}">
             </div>
+            @else
+            {{-- Selector dinámico de slots para médicos --}}
+            <div class="slots-section">
+                <label>Horario disponible <span style="font-weight:400; color:#64748b;">(según jornada del médico)</span></label>
+                @error('hora')
+                <p class="error">{{ $message }}</p>
+                @enderror
+
+                <div id="slots-container-medico">
+                    <div class="slots-prompt">
+                        Selecciona un <strong>paciente</strong> y una <strong>fecha</strong> para ver los horarios disponibles.
+                    </div>
+                </div>
+
+                <input type="hidden" name="hora" id="hora_hidden_medico" value="{{ old('hora') }}">
+            </div>
             @endif
 
             <div class="form-group">
                 <p>Duración por cita: 30 minutos</p>
-                
             </div>
 
             <div class="form-group">
@@ -330,69 +330,102 @@
                         if (!r.ok) throw new Error('Error de red');
                         return r.json();
                     })
-                    .then(data => renderSlots(data.slots))
+                    .then(data => renderSlots(data.slots, slotsContainer, horaHidden))
                     .catch(() => {
                         slotsContainer.innerHTML = '<div class="slots-prompt">Error al cargar horarios. Intenta de nuevo.</div>';
                     });
             }
 
-            function renderSlots(slots) {
-                if (!slots || slots.length === 0) {
-                    slotsContainer.innerHTML = '<div class="slots-prompt">No hay horarios configurados para este día.</div>';
+            medicoSelect.addEventListener('change', () => { horaHidden.value = ''; fetchSlots(); });
+            fechaInput.addEventListener('change', () => { horaHidden.value = ''; fetchSlots(); });
+
+            if (medicoSelect.value && fechaInput.value) fetchSlots();
+        });
+    </script>
+    @else
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // El médico logueado es el propietario; usamos su ID para consultar slots
+            const medicoId = {{ Auth::guard('medico')->id() }};
+            const fechaInput = document.getElementById('fecha');
+            const pacienteSelect = document.getElementById('paciente_id');
+            const slotsContainer = document.getElementById('slots-container-medico');
+            const horaHidden = document.getElementById('hora_hidden_medico');
+
+            function fetchSlots() {
+                const fecha = fechaInput.value;
+
+                if (!fecha || !pacienteSelect.value) {
+                    slotsContainer.innerHTML = `
+                        <div class="slots-prompt">
+                            Selecciona un <strong>paciente</strong> y una <strong>fecha</strong> para ver los horarios disponibles.
+                        </div>`;
                     return;
                 }
 
-                const currentValue = horaHidden.value;
-                let html = '<div class="slots-grid">';
+                slotsContainer.innerHTML = '<div class="slots-loading">Cargando horarios...</div>';
 
-                slots.forEach(slot => {
-                    const isSelected = (currentValue === slot.hora);
-                    const isDisabled = slot.ocupado;
-
-                    if (isDisabled) {
-                        html += `
-                            <div class="slot-btn slot-disabled" title="Horario ocupado">
-                                <span class="slot-label">${slot.hora}</span>
-                                <span class="slot-status">Ocupado</span>
-                            </div>`;
-                    } else {
-                        html += `
-                            <div class="slot-btn ${isSelected ? 'slot-selected' : ''}" data-hora="${slot.hora}">
-                                <span class="slot-label">${slot.hora}</span>
-                                <span class="slot-status">Disponible</span>
-                            </div>`;
-                    }
-                });
-
-                html += '</div>';
-                slotsContainer.innerHTML = html;
-
-                // Add click listeners
-                slotsContainer.querySelectorAll('.slot-btn:not(.slot-disabled)').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        slotsContainer.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('slot-selected'));
-                        btn.classList.add('slot-selected');
-                        horaHidden.value = btn.getAttribute('data-hora');
+                fetch(`{{ route('citas.slots') }}?medico_id=${medicoId}&fecha=${fecha}`)
+                    .then(r => {
+                        if (!r.ok) throw new Error('Error de red');
+                        return r.json();
+                    })
+                    .then(data => renderSlots(data.slots, slotsContainer, horaHidden))
+                    .catch(() => {
+                        slotsContainer.innerHTML = '<div class="slots-prompt">Error al cargar horarios. Intenta de nuevo.</div>';
                     });
-                });
             }
 
-            medicoSelect.addEventListener('change', () => {
-                horaHidden.value = '';
-                fetchSlots();
-            });
-            fechaInput.addEventListener('change', () => {
-                horaHidden.value = '';
-                fetchSlots();
-            });
+            pacienteSelect.addEventListener('change', () => { horaHidden.value = ''; fetchSlots(); });
+            fechaInput.addEventListener('change', () => { horaHidden.value = ''; fetchSlots(); });
 
-            // If old values exist (validation failure), pre-load slots
-            if (medicoSelect.value && fechaInput.value) {
-                fetchSlots();
-            }
+            if (pacienteSelect.value && fechaInput.value) fetchSlots();
         });
     </script>
     @endif
+
+    {{-- Función compartida de renderizado de slots --}}
+    <script>
+        function renderSlots(slots, container, hiddenInput) {
+            if (!slots || slots.length === 0) {
+                container.innerHTML = '<div class="slots-prompt">No hay horarios configurados para este día.</div>';
+                return;
+            }
+
+            const currentValue = hiddenInput.value;
+            let html = '<div class="slots-grid">';
+
+            slots.forEach(slot => {
+                const isSelected = (currentValue === slot.hora);
+                const isDisabled = slot.ocupado;
+
+                if (isDisabled) {
+                    html += `
+                        <div class="slot-btn slot-disabled" title="Horario ocupado">
+                            <span class="slot-label">${slot.hora}</span>
+                            <span class="slot-status">Ocupado</span>
+                        </div>`;
+                } else {
+                    html += `
+                        <div class="slot-btn ${isSelected ? 'slot-selected' : ''}" data-hora="${slot.hora}">
+                            <span class="slot-label">${slot.hora}</span>
+                            <span class="slot-status">Disponible</span>
+                        </div>`;
+                }
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+
+            container.querySelectorAll('.slot-btn:not(.slot-disabled)').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    container.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('slot-selected'));
+                    btn.classList.add('slot-selected');
+                    hiddenInput.value = btn.getAttribute('data-hora');
+                });
+            });
+        }
+    </script>
 </body>
 
 </html>
