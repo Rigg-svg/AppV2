@@ -67,4 +67,4 @@ App\Models\Medico::create(['nombre' => 'Valentina Ruiz','especialidad' => 'Derma
 
 ```
 
-Documentación: https://mintlify.wiki/Rigg-svg/AppV2/introduction
+Documentación: https://github-55.mintlify.app/
